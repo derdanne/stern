@@ -16,7 +16,6 @@ package stern
 
 import (
 	"context"
-
 	"github.com/pkg/errors"
 	"github.com/wercker/stern/kubernetes"
 )
@@ -27,6 +26,12 @@ func Run(ctx context.Context, config *Config) error {
 	clientset, err := kubernetes.NewClientSet(clientConfig)
 	if err != nil {
 		return err
+	}
+	
+	var graylogAddress string
+	graylogAddress = config.GraylogAddress
+	if graylogAddress == "" {
+		return errors.Wrap(err, "Graylog Server address unset")
 	}
 
 	var namespace string
@@ -58,12 +63,14 @@ func Run(ctx context.Context, config *Config) error {
 			}
 
 			tail := NewTail(p.Namespace, p.Pod, p.Container, config.Template, &TailOptions{
-				Timestamps:   config.Timestamps,
-				SinceSeconds: int64(config.Since.Seconds()),
-				Exclude:      config.Exclude,
-				Include:      config.Include,
-				Namespace:    config.AllNamespaces,
-				TailLines:    config.TailLines,
+				Timestamps:     config.Timestamps,
+				SinceSeconds:   int64(config.Since.Seconds()),
+				Exclude:        config.Exclude,
+				Include:        config.Include,
+				Namespace:      config.AllNamespaces,
+				TailLines:      config.TailLines,
+				ContextName:    config.ContextName,
+				GraylogAddress: config.GraylogAddress,
 			})
 			tails[id] = tail
 

@@ -28,6 +28,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
+	"gopkg.in/Graylog2/go-gelf.v1/gelf"
+	"time"
 )
 
 type Tail struct {
@@ -43,12 +45,14 @@ type Tail struct {
 }
 
 type TailOptions struct {
-	Timestamps   bool
-	SinceSeconds int64
-	Exclude      []*regexp.Regexp
-	Include      []*regexp.Regexp
-	Namespace    bool
-	TailLines    *int64
+	Timestamps     bool
+	SinceSeconds   int64
+	Exclude        []*regexp.Regexp
+	Include        []*regexp.Regexp
+	Namespace      bool
+	TailLines      *int64
+	ContextName    string
+	GraylogAddress string
 }
 
 // NewTail returns a new tail for a Kubernetes container inside a pod
@@ -167,6 +171,25 @@ func (t *Tail) Close() {
 	close(t.closed)
 }
 
+// Build Graylog message
+func wrapBuildMessage(f string, l int32, ex map[string]interface{}, h string) *gelf.Message {
+	/*
+		Level is a standard syslog level
+		Facility is deprecated
+		Line is deprecated
+		File is deprecated
+	*/
+	m := &gelf.Message{
+		Version:  "1.1",
+		Host:     h,
+		Full:     f,
+		TimeUnix: float64(time.Now().Unix()),
+		Level:    l,
+		Extra:    ex,
+	}
+	return m
+}
+
 // Print prints a color coded log message with the pod and container names
 func (t *Tail) Print(msg string) {
 	vm := Log{
@@ -177,9 +200,27 @@ func (t *Tail) Print(msg string) {
 		PodColor:       t.podColor,
 		ContainerColor: t.containerColor,
 	}
+
+	customExtras := map[string]interface{}{
+		"Namespace":     t.Namespace, 
+		"PodName":       t.PodName, 
+		"ContainerName": t.ContainerName,
+	}
+
+	gm := wrapBuildMessage(msg, int32(3), customExtras, t.Options.ContextName)
+	gelfWriter, writerErr := gelf.NewWriter(t.Options.GraylogAddress)
+	if writerErr != nil {
+		os.Stderr.WriteString(fmt.Sprintf("setup gelf writer failed: %s", writerErr ))
+	}
+
+	writeMsgErr := gelfWriter.WriteMessage(gm)
+	if writeMsgErr != nil {
+		os.Stderr.WriteString(fmt.Sprintf("Received error when sending GELF message: %s", writeMsgErr.Error()))
+	}
+
 	err := t.tmpl.Execute(os.Stdout, vm)
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("expanding template failed: %s", err))
+	 	os.Stderr.WriteString(fmt.Sprintf("expanding template failed: %s", err))
 	}
 }
 

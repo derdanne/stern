@@ -380,6 +380,12 @@
 			"revisionTime": "2018-07-19T21:38:58Z"
 		},
 		{
+			"checksumSHA1": "5pVjpie+KBGKmWBKktNTnHSvRT4=",
+			"path": "gopkg.in/Graylog2/go-gelf.v1/gelf",
+			"revision": "7ebf4f536d8f52a04bd794e815629ff499325a91",
+			"revisionTime": "2017-08-11T15:42:26Z"
+		},
+		{
 			"checksumSHA1": "pfQwQtWlFezJq0Viroa/L+v+yDM=",
 			"origin": "k8s.io/apimachinery/vendor/gopkg.in/inf.v0",
 			"path": "gopkg.in/inf.v0",

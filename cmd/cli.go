@@ -56,6 +56,7 @@ type Options struct {
 	completion       string
 	template         string
 	output           string
+	graylogServer    string
 }
 
 var opts = &Options{
@@ -92,6 +93,7 @@ func Run() {
 	cmd.Flags().StringVar(&opts.completion, "completion", opts.completion, "Outputs stern command-line completion code for the specified shell. Can be 'bash' or 'zsh'")
 	cmd.Flags().StringVar(&opts.template, "template", opts.template, "Template to use for log lines, leave empty to use --output flag")
 	cmd.Flags().StringVarP(&opts.output, "output", "o", opts.output, "Specify predefined template. Currently support: [default, raw, json]")
+	cmd.Flags().StringVar(&opts.graylogServer, "graylogserver", opts.graylogServer, "Specify Graylog Server address to send logs to via GELF")
 
 	// Specify custom bash completion function
 	cmd.BashCompletionFunction = bash_completion_func
@@ -268,6 +270,8 @@ func parseConfig(args []string) (*stern.Config, error) {
 		opts.since = 172800000000000 // 48h
 	}
 
+	graylogServer := opts.graylogServer
+
 	return &stern.Config{
 		KubeConfig:            kubeConfig,
 		PodQuery:              pod,
@@ -284,6 +288,7 @@ func parseConfig(args []string) (*stern.Config, error) {
 		LabelSelector:         labelSelector,
 		TailLines:             tailLines,
 		Template:              template,
+		GraylogAddress:        graylogServer,
 	}, nil
 }
 
