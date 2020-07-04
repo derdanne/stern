@@ -86,17 +86,9 @@ func determineColor(podName string) (podColor, containerColor *color.Color) {
 }
 
 // Start starts tailing
-func (t *Tail) Start(ctx context.Context, i v1.PodInterface) {
+func (t *Tail) Start(ctx context.Context, i v1.PodInterface, gelfWriter *gelf.TCPWriter ) {
 	t.podColor, t.containerColor = determineColor(t.PodName)
 	
-    gelfWriter, writerErr := gelf.NewTCPWriter(t.Options.GraylogAddress)
-    if writerErr != nil {
-	    os.Stderr.WriteString(fmt.Sprintf("setup gelf writer failed: %s", writerErr ))
-	}
-
-	gelfWriter.MaxReconnect = int(10)
-	gelfWriter.ReconnectDelay, _ = time.ParseDuration("30s")
-
 	go func() {
 		g := color.New(color.FgHiGreen, color.Bold).SprintFunc()
 		p := t.podColor.SprintFunc()
@@ -163,7 +155,6 @@ func (t *Tail) Start(ctx context.Context, i v1.PodInterface) {
 	go func() {
 		<-ctx.Done()
 		close(t.closed)
-		gelfWriter.Close()
 	}()
 }
 

@@ -18,10 +18,16 @@ import (
 	"context"
 	"github.com/pkg/errors"
 	"github.com/wercker/stern/kubernetes"
+	"gopkg.in/Graylog2/go-gelf.v2/gelf"
+	"time"
+	"math/rand"
+	"fmt"
 )
 
 // Run starts the main run loop
 func Run(ctx context.Context, config *Config) error {
+	rand.Seed(time.Now().UnixNano())
+
 	clientConfig := kubernetes.NewClientConfig(config.KubeConfig, config.ContextName)
 	clientset, err := kubernetes.NewClientSet(clientConfig)
 	if err != nil {
@@ -33,6 +39,33 @@ func Run(ctx context.Context, config *Config) error {
 	if graylogAddress == "" {
 		return errors.Wrap(err, "Graylog Server address unset")
 	}
+
+	var writerErr error
+	var gelfWriter *gelf.TCPWriter
+	var attempts int = 10
+	var sleep time.Duration = time.Second * 10
+
+	for {
+		gelfWriter, writerErr = gelf.NewTCPWriter(graylogAddress)
+		if writerErr != nil {
+ 			if attempts--; attempts > 0 {
+				// Add some randomness to prevent creating a Thundering Herd
+ 				jitter := time.Duration(rand.Int63n(int64(sleep)))
+ 				sleep = sleep + jitter/2
+ 				fmt.Println("sleep")
+				time.Sleep(sleep)
+				gelfWriter = nil
+				writerErr = nil
+				continue
+ 			} else {
+				return errors.Wrap(writerErr, "setup gelf writer failed")
+ 			}
+ 		} else {
+ 			gelfWriter.MaxReconnect = int(10)
+ 			gelfWriter.ReconnectDelay, _ = time.ParseDuration("30s")
+ 			break 
+ 		}
+ 	}
 
 	var namespace string
 	// A specific namespace is ignored if all-namespaces is provided
@@ -48,7 +81,7 @@ func Run(ctx context.Context, config *Config) error {
 		}
 	}
 
-	added, removed, err := Watch(ctx, clientset.Core().Pods(namespace), config.PodQuery, config.ContainerQuery, config.ExcludeContainerQuery, config.ContainerState, config.LabelSelector)
+	added, removed, err := Watch(ctx, clientset.CoreV1().Pods(namespace), config.PodQuery, config.ContainerQuery, config.ExcludeContainerQuery, config.ContainerState, config.LabelSelector)
 	if err != nil {
 		return errors.Wrap(err, "failed to set up watch")
 	}
@@ -74,7 +107,7 @@ func Run(ctx context.Context, config *Config) error {
 			})
 			tails[id] = tail
 
-			tail.Start(ctx, clientset.Core().Pods(p.Namespace))
+			tail.Start(ctx, clientset.CoreV1().Pods(p.Namespace), gelfWriter)
 		}
 	}()
 
