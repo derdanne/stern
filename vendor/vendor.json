@@ -45,6 +45,18 @@
 			"revisionTime": "2018-07-19T21:38:58Z"
 		},
 		{
+			"checksumSHA1": "3KhDEC5MM0iyN+FsLfxpnvFVeuY=",
+			"path": "github.com/davecgh/go-spew/spew",
+			"revision": "d8f796af33cc11cb798c1aaeb27a4ebc5099927d",
+			"revisionTime": "2018-08-30T19:11:22Z"
+		},
+		{
+			"checksumSHA1": "a2yC46a1qsJomgY6rb+FkTFiqmE=",
+			"path": "github.com/davecgh/go-spew/spew/testdata",
+			"revision": "d8f796af33cc11cb798c1aaeb27a4ebc5099927d",
+			"revisionTime": "2018-08-30T19:11:22Z"
+		},
+		{
 			"checksumSHA1": "ilxtmghXZ7UhH+8HqzQvDNFohik=",
 			"origin": "k8s.io/client-go/vendor/github.com/dgrijalva/jwt-go",
 			"path": "github.com/dgrijalva/jwt-go",
@@ -188,6 +200,12 @@
 			"revisionTime": "2018-07-19T16:29:00Z"
 		},
 		{
+			"checksumSHA1": "x9dJv+jQhUFN6R6h4fzPjGLvQLg=",
+			"path": "github.com/kr/text",
+			"revision": "e2ffdb16a802fe2bb95e2e35ff34f0e53aeef34f",
+			"revisionTime": "2018-05-06T08:24:08Z"
+		},
+		{
 			"checksumSHA1": "X6hjUCUJp9UkPaic8Y99fsb4tUk=",
 			"origin": "github.com/fatih/color/vendor/github.com/mattn/go-colorable",
 			"path": "github.com/mattn/go-colorable",
@@ -222,6 +240,12 @@
 			"revisionTime": "2018-07-19T16:29:00Z"
 		},
 		{
+			"checksumSHA1": "7+zlrhmRKnlIG38Vu6n4uE2jclM=",
+			"path": "github.com/niemeyer/pretty",
+			"revision": "a10e7caefd8e0d600cea437f5c3613aeb1553d56",
+			"revisionTime": "2020-02-27T12:48:42Z"
+		},
+		{
 			"checksumSHA1": "HCBEZni41uRhZlY2NUY+0mo0Whc=",
 			"origin": "k8s.io/client-go/vendor/github.com/peterbourgon/diskv",
 			"path": "github.com/peterbourgon/diskv",
@@ -235,6 +259,30 @@
 			"revisionTime": "2018-03-11T21:45:15Z"
 		},
 		{
+			"checksumSHA1": "RZOdTSZN/PgcTqko5LzIAzw+UT4=",
+			"path": "github.com/pmezard/go-difflib/difflib",
+			"revision": "5d4384ee4fb2527b0a1256a821ebfc92f91efefc",
+			"revisionTime": "2018-12-26T10:54:42Z"
+		},
+		{
+			"checksumSHA1": "OjHnUIQgp1H1g0njEcTxX3RnPig=",
+			"path": "github.com/sirupsen/logrus",
+			"revision": "6699a89a232f3db797f2e280639854bbc4b89725",
+			"revisionTime": "2020-05-28T08:56:38Z"
+		},
+		{
+			"checksumSHA1": "jDsR9gpxYB6YBduE5qD8FmLiYv0=",
+			"path": "github.com/sirupsen/logrus/hooks/syslog",
+			"revision": "6699a89a232f3db797f2e280639854bbc4b89725",
+			"revisionTime": "2020-05-28T08:56:38Z"
+		},
+		{
+			"checksumSHA1": "+SEEYlQ3V1UFOYrcM+5xsO9ow0U=",
+			"path": "github.com/sirupsen/logrus/internal/testutils",
+			"revision": "6699a89a232f3db797f2e280639854bbc4b89725",
+			"revisionTime": "2020-05-28T08:56:38Z"
+		},
+		{
 			"checksumSHA1": "hEbU/3hbgQ+jOpFIydu8BBddN1A=",
 			"path": "github.com/spf13/cobra",
 			"revision": "a114f312e075f65bf30d6d9a1430113f857e543b",
@@ -245,6 +293,18 @@
 			"path": "github.com/spf13/pflag",
 			"revision": "3ebe029320b2676d667ae88da602a5f854788a8a",
 			"revisionTime": "2018-06-01T13:25:42Z"
+		},
+		{
+			"checksumSHA1": "5NWvCx58/PQcom1sQXUE5hwkgVs=",
+			"path": "github.com/stretchr/testify/assert",
+			"revision": "87a988cffbb945287b83c99ff8bd0c1de930dd85",
+			"revisionTime": "2020-06-28T12:02:02Z"
+		},
+		{
+			"checksumSHA1": "rTEZux6GrQEapId1sS2XunRxMEM=",
+			"path": "github.com/stretchr/testify/require",
+			"revision": "87a988cffbb945287b83c99ff8bd0c1de930dd85",
+			"revisionTime": "2020-06-28T12:02:02Z"
 		},
 		{
 			"checksumSHA1": "a2gHVJy7WYbxh1Jf2ks23/olxw8=",
@@ -380,10 +440,16 @@
 			"revisionTime": "2018-07-19T21:38:58Z"
 		},
 		{
-			"checksumSHA1": "5pVjpie+KBGKmWBKktNTnHSvRT4=",
-			"path": "gopkg.in/Graylog2/go-gelf.v1/gelf",
-			"revision": "7ebf4f536d8f52a04bd794e815629ff499325a91",
-			"revisionTime": "2017-08-11T15:42:26Z"
+			"checksumSHA1": "6VVDntdSnZKDfMEK7+b63yiCwnY=",
+			"path": "gopkg.in/Graylog2/go-gelf.v2/gelf",
+			"revision": "1550ee647df0510058c9d67a45c56f18911d80b8",
+			"revisionTime": "2019-10-17T10:21:06Z"
+		},
+		{
+			"checksumSHA1": "QY5pnyaPitEbzURHliLLwUPK67I=",
+			"path": "gopkg.in/check.v1",
+			"revision": "8fa46927fb4f5b54d48bde78c6c08db205b2298c",
+			"revisionTime": "2020-02-27T12:52:54Z"
 		},
 		{
 			"checksumSHA1": "pfQwQtWlFezJq0Viroa/L+v+yDM=",
@@ -398,6 +464,12 @@
 			"path": "gopkg.in/yaml.v2",
 			"revision": "594fc14b6f143d963ea2c8132e09e73fe244b6c9",
 			"revisionTime": "2018-07-19T16:29:00Z"
+		},
+		{
+			"checksumSHA1": "T7aSH75iGcKcU3HotLcBbsMsM6Q=",
+			"path": "gopkg.in/yaml.v3",
+			"revision": "eeeca48fe7764f320e4870d231902bf9c1be2c08",
+			"revisionTime": "2020-06-15T11:34:13Z"
 		},
 		{
 			"checksumSHA1": "dwwoN+THAC1dJELaF0DrXOMXR74=",

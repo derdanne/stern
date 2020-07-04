@@ -28,7 +28,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
-	"gopkg.in/Graylog2/go-gelf.v1/gelf"
+	"gopkg.in/Graylog2/go-gelf.v2/gelf"
 	"time"
 )
 
@@ -88,6 +88,14 @@ func determineColor(podName string) (podColor, containerColor *color.Color) {
 // Start starts tailing
 func (t *Tail) Start(ctx context.Context, i v1.PodInterface) {
 	t.podColor, t.containerColor = determineColor(t.PodName)
+	
+    gelfWriter, writerErr := gelf.NewTCPWriter(t.Options.GraylogAddress)
+    if writerErr != nil {
+	    os.Stderr.WriteString(fmt.Sprintf("setup gelf writer failed: %s", writerErr ))
+	}
+
+	gelfWriter.MaxReconnect = int(10)
+	gelfWriter.ReconnectDelay, _ = time.ParseDuration("30s")
 
 	go func() {
 		g := color.New(color.FgHiGreen, color.Bold).SprintFunc()
@@ -148,14 +156,14 @@ func (t *Tail) Start(ctx context.Context, i v1.PodInterface) {
 					continue OUTER
 				}
 			}
-
-			t.Print(str)
+			t.Print(str, gelfWriter)
 		}
 	}()
 
 	go func() {
 		<-ctx.Done()
 		close(t.closed)
+		gelfWriter.Close()
 	}()
 }
 
@@ -173,12 +181,7 @@ func (t *Tail) Close() {
 
 // Build Graylog message
 func wrapBuildMessage(f string, l int32, ex map[string]interface{}, h string) *gelf.Message {
-	/*
-		Level is a standard syslog level
-		Facility is deprecated
-		Line is deprecated
-		File is deprecated
-	*/
+
 	m := &gelf.Message{
 		Version:  "1.1",
 		Host:     h,
@@ -191,7 +194,7 @@ func wrapBuildMessage(f string, l int32, ex map[string]interface{}, h string) *g
 }
 
 // Print prints a color coded log message with the pod and container names
-func (t *Tail) Print(msg string) {
+func (t *Tail) Print(msg string, gelfWriter *gelf.TCPWriter) {
 	vm := Log{
 		Message:        msg,
 		Namespace:      t.Namespace,
@@ -208,10 +211,6 @@ func (t *Tail) Print(msg string) {
 	}
 
 	gm := wrapBuildMessage(msg, int32(3), customExtras, t.Options.ContextName)
-	gelfWriter, writerErr := gelf.NewWriter(t.Options.GraylogAddress)
-	if writerErr != nil {
-		os.Stderr.WriteString(fmt.Sprintf("setup gelf writer failed: %s", writerErr ))
-	}
 
 	writeMsgErr := gelfWriter.WriteMessage(gm)
 	if writeMsgErr != nil {
