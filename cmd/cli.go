@@ -41,7 +41,7 @@ const version = "2.0.0"
 type Options struct {
 	container        string
 	excludeContainer string
-	containerState   string
+	containerState   []string
 	timestamps       bool
 	since            time.Duration
 	context          string
@@ -63,7 +63,7 @@ type Options struct {
 
 var opts = &Options{
 	container:      ".*",
-	containerState: "running",
+	containerState: []string{stern.RUNNING, stern.WAITING},
 	tail:           -1,
 	color:          "auto",
 	template:       "",
@@ -78,7 +78,7 @@ func Run() {
 
 	cmd.Flags().StringVarP(&opts.container, "container", "c", opts.container, "Container name when multiple containers in pod")
 	cmd.Flags().StringVarP(&opts.excludeContainer, "exclude-container", "E", opts.excludeContainer, "Exclude a Container name")
-	cmd.Flags().StringVar(&opts.containerState, "container-state", opts.containerState, "If present, tail containers with status in running, waiting or terminated. Default to running.")
+	cmd.Flags().StringSliceVar(&opts.containerState, "container-state", opts.containerState, "If present, tail containers with status in running, waiting or terminated.")
 	cmd.Flags().BoolVarP(&opts.timestamps, "timestamps", "t", opts.timestamps, "Print timestamps")
 	cmd.Flags().DurationVarP(&opts.since, "since", "s", opts.since, "Return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to 48h.")
 	cmd.Flags().StringVar(&opts.context, "context", opts.context, "Kubernetes context to use. Default to current context configured in kubeconfig.")
