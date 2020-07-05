@@ -89,12 +89,13 @@ It accepts a custom template through the `--template` flag, which will be
 compiled to a Go template and then used for every log message. This Go template
 will receive the following struct:
 
-| property        | type   | description               |
-|-----------------|--------|---------------------------|
-| `Message`       | string | The log message itself    |
-| `Namespace`     | string | The namespace of the pod  |
-| `PodName`       | string | The name of the pod       |
-| `ContainerName` | string | The name of the container |
+| property        | type   | description                                   |
+|-----------------|--------|-----------------------------------------------|
+| `Message`       | string | The log message itself                        |
+| `Namespace`     | string | The namespace of the pod                      |
+| `PodName`       | string | The name of the pod                           |
+| `ContainerName` | string | The name of the container                     |
+| `NodeName`      | string | The name of the node where the pod is running |
 
 The following functions are available within the template (besides the [builtin
 functions](https://golang.org/pkg/text/template/#hdr-Functions)):
