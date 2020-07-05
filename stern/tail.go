@@ -230,14 +230,16 @@ func (t *Tail) Print(msg string, gelfWriter *gelf.TCPWriter) string {
 		if writeMsgErr != nil {
 			os.Stderr.WriteString(fmt.Sprintf("Received error when sending GELF message: %s", writeMsgErr.Error()))
 		}
-	}
-	var buf bytes.Buffer
-	err := t.tmpl.Execute(&buf, vm)
-	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("expanding template failed: %s", err))
 		return ""
+	} else {
+		var buf bytes.Buffer
+		err := t.tmpl.Execute(&buf, vm)
+		if err != nil {
+			os.Stderr.WriteString(fmt.Sprintf("expanding template failed: %s", err))
+			return ""
+		}
+		return buf.String()
 	}
-	return buf.String()
 }
 
 // Log is the object which will be used together with the template to generate

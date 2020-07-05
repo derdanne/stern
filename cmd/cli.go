@@ -230,6 +230,11 @@ func parseConfig(args []string) (*stern.Config, error) {
 		return nil, errors.New("color should be one of 'always', 'never', or 'auto'")
 	}
 
+	// always no color if output to Graylog
+	if opts.graylogServer != "" {
+		color.NoColor = true
+	}
+
 	t := opts.template
 	if t == "" {
 		switch opts.output {
