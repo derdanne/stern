@@ -63,7 +63,7 @@ jobs:
         prerelease: false
 
     - name: Upload Release Asset linux amd64
-      id: upload-release-asset 
+      id: upload-release-asset-linux-amd64
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -74,7 +74,7 @@ jobs:
         asset_content_type: application/zip
     
     - name: Upload Release Asset darwin amd64
-      id: upload-release-asset 
+      id: upload-release-asset-darwin-amd64
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -85,7 +85,7 @@ jobs:
         asset_content_type: application/zip
     
     - name: Upload Release Asset windows amd64
-      id: upload-release-asset 
+      id: upload-release-asset-windows-amd64
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
