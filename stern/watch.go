@@ -82,13 +82,16 @@ func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, con
 							continue
 						}
 
+						t := &Target{
+							Namespace: pod.Namespace,
+							Pod:       pod.Name,
+							Container: c.Name,
+							NodeName:  pod.Spec.NodeName,
+						}
 						if containerState.Match(c.State) {
-							added <- &Target{
-								Namespace: pod.Namespace,
-								Pod:       pod.Name,
-								Container: c.Name,
-								NodeName:  pod.Spec.NodeName,
-							}
+							added <- t
+						} else {
+							removed <- t
 						}
 					}
 				case watch.Deleted:
