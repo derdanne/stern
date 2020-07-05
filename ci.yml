@@ -1,4 +1,5 @@
-box: golang:1.8
+runs-on: self-hosted
+box: golang:1.14
 build:
   base-path: /go/src/github.com/derdanne/stern
   steps:
