@@ -204,7 +204,7 @@ source <(stern --completion=zsh)
 
 ## Contributing to this repository
 
-Oracle welcomes contributions to this repository from anyone.  Please see
+Derdanne welcomes contributions to this repository from anyone.  Please see
 [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 This module based on Wercker Holding BV "Stern" from https://github.com/wercker/stern.
