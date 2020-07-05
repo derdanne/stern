@@ -5,6 +5,16 @@
 Stern allows you to `tail` multiple pods on Kubernetes and multiple containers
 within the pod. Each result is color coded for quicker debugging.
 
+Stern can also use the [GELF](https://docs.graylog.org/en/3.2/pages/gelf.html)
+format and send the logs to a remote GELF capable logging solution like Graylog.
+When `graylog-server` is specified, it will not output the log messages except 
+discovery messages to stdout. We implement the GELF TCP messsage delivery.
+
+You can configure count of retries when connection is initialized to your logging
+server. Stern will try to resend non deliverable GELF messages every 15 seconds for
+10 minutes before giving up delivery. The specified `context` is used as host in the
+GELF message. 
+
 The query is a regular expression so the pod name can easily be filtered and
 you don't need to specify the exact id (for instance omitting the deployment
 id). If a pod is deleted it gets removed from tail and if a new pod is added it
@@ -62,6 +72,8 @@ The `pod` query is a regular expression so you could provide `"web-\w"` to tail
 | `--tail`             | `-1`             | The number of lines from the end of the logs to show. Defaults to -1, showing all logs.                      |
 | `--color`            | `auto`           | Force set color output. `auto`: colorize if tty attached, `always`: always colorize, `never`: never colorize |
 | `--output`           | `default`        | Specify predefined template. Currently support: [default, raw, json] See templates section                   |
+| `--graylog-server`   |                  | Specify Graylog Server address to send logs to via GELF (format: address:port)                               |
+| `--graylog-retries`  | `100`            | Specify Graylog Server connection retries                                                                    |
 | `template`           |                  | Template to use for log lines, leave empty to use --output flag                                              |
 
 See `stern --help` for details
@@ -100,7 +112,9 @@ functions](https://golang.org/pkg/text/template/#hdr-Functions)):
 | `json`  | `object`              | Marshal the object and output it as a json text                 |
 | `color` | `color.Color, string` | Wrap the text in color (.ContainerColor and .PodColor provided) |
 
-
+If Graylog server address is specified, stern will not:
+- print out messages except discovery of containers
+- colorize the output
 
 ## Examples:
 
@@ -159,6 +173,12 @@ Output using a custom template with stern-provided colors:
 
 ```
 stern --template '{{.Message}} ({{.Namespace}}/{{color .PodColor .PodName}}/{{color .ContainerColor .ContainerName}})' backend
+```
+
+Output all messages to Graylog server
+
+```
+stern ".*" --graylog-server 127.0.0.1:12201 --graylog-retries 50 --all-namespaces
 ```
 
 ## Completion
