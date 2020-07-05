@@ -16,14 +16,15 @@ package stern
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/wercker/stern/kubernetes"
 	"gopkg.in/Graylog2/go-gelf.v2/gelf"
-	"time"
-	"math/rand"
-	"fmt"
-	"os"
-	"strconv"
 )
 
 // Run starts the main run loop
@@ -35,7 +36,7 @@ func Run(ctx context.Context, config *Config) error {
 	if err != nil {
 		return err
 	}
-	
+
 	if config.GraylogServer == "" {
 		return errors.Wrap(err, "Graylog Server address unset")
 	}
@@ -47,25 +48,25 @@ func Run(ctx context.Context, config *Config) error {
 	for {
 		gelfWriter, writerErr = gelf.NewTCPWriter(config.GraylogServer)
 		if writerErr != nil {
- 			if config.GraylogRetries--; config.GraylogRetries > 0 {
+			if config.GraylogRetries--; config.GraylogRetries > 0 {
 				// Add some randomness to prevent creating a Thundering Herd
- 				jitter := time.Duration(rand.Int63n(int64(sleep)))
+				jitter := time.Duration(rand.Int63n(int64(sleep)))
 				sleep = (sleep + jitter/2)
 				timeNow := time.Now().Format("2006/01/02 15:04:05")
-				os.Stderr.WriteString(fmt.Sprintf( timeNow + " Could not connect to Graylog Server, next retry in %s. " + strconv.Itoa(config.GraylogRetries) + " retries left. \n", sleep.Round(time.Second)))
+				os.Stderr.WriteString(fmt.Sprintf(timeNow+" Could not connect to Graylog Server, next retry in %s. "+strconv.Itoa(config.GraylogRetries)+" retries left. \n", sleep.Round(time.Second)))
 				time.Sleep(sleep)
 				gelfWriter = nil
 				writerErr = nil
 				continue
- 			} else {
+			} else {
 				return errors.Wrap(writerErr, "setup gelf writer failed")
- 			}
- 		} else {
- 			gelfWriter.MaxReconnect = int(10)
- 			gelfWriter.ReconnectDelay, _ = time.ParseDuration("30s")
- 			break 
- 		}
- 	}
+			}
+		} else {
+			break
+		}
+	}
+	gelfWriter.MaxReconnect = 40
+	gelfWriter.ReconnectDelay = 15
 
 	var namespace string
 	// A specific namespace is ignored if all-namespaces is provided
@@ -96,14 +97,14 @@ func Run(ctx context.Context, config *Config) error {
 			}
 
 			tail := NewTail(p.Namespace, p.Pod, p.Container, config.Template, &TailOptions{
-				Timestamps:     config.Timestamps,
-				SinceSeconds:   int64(config.Since.Seconds()),
-				Exclude:        config.Exclude,
-				Include:        config.Include,
-				Namespace:      config.AllNamespaces,
-				TailLines:      config.TailLines,
-				ContextName:    config.ContextName,
-				GraylogServer:  config.GraylogServer,
+				Timestamps:    config.Timestamps,
+				SinceSeconds:  int64(config.Since.Seconds()),
+				Exclude:       config.Exclude,
+				Include:       config.Include,
+				Namespace:     config.AllNamespaces,
+				TailLines:     config.TailLines,
+				ContextName:   config.ContextName,
+				GraylogServer: config.GraylogServer,
 			})
 			tails[id] = tail
 
