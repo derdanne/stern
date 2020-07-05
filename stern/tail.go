@@ -195,50 +195,50 @@ func wrapBuildMessage(s string, f string, l int32, ex map[string]interface{}, h 
 
 // Print prints a color coded log message with the pod and container names
 func (t *Tail) Print(msg string, gelfWriter *gelf.TCPWriter) string {
-	var c int
-	var crop string
-	lengthmsg := len(msg)
-
-	vm := Log{
-		Message:        msg,
-		Namespace:      t.Namespace,
-		PodName:        t.PodName,
-		ContainerName:  t.ContainerName,
-		NodeName:       t.NodeName,
-		PodColor:       t.podColor,
-		ContainerColor: t.containerColor,
-	}
-
-	customExtras := map[string]interface{}{
-		"Namespace":     t.Namespace,
-		"PodName":       t.PodName,
-		"ContainerName": t.ContainerName,
-		"NodeName":      t.NodeName,
-	}
-
-	// build gelf short_message
-	if lengthmsg < 50 {
-		c = lengthmsg - 1
-		crop = ""
-	} else {
-		c = 50
-		crop = " ..."
-	}
-	smsg := "Log event in " + t.Namespace + " from " + t.ContainerName + " in " + t.PodName + " on " + t.NodeName + ": " + msg[0:c] + crop
-
-	// set host if ContextName empty
-	if t.Options.ContextName == "" {
-		t.Options.ContextName = "default"
-	}
-	gm := wrapBuildMessage(smsg, msg, 3, customExtras, t.Options.ContextName)
-
 	if t.Options.GraylogServer != "" {
+		var c int
+		var crop string
+		lengthmsg := len(msg)
+
+		customExtras := map[string]interface{}{
+			"Namespace":     t.Namespace,
+			"PodName":       t.PodName,
+			"ContainerName": t.ContainerName,
+			"NodeName":      t.NodeName,
+		}
+
+		// build gelf short_message
+		if lengthmsg < 50 {
+			c = lengthmsg - 1
+			crop = ""
+		} else {
+			c = 50
+			crop = " ..."
+		}
+		smsg := "Log event in " + t.Namespace + " from " + t.ContainerName + " in " + t.PodName + " on " + t.NodeName + ": " + msg[0:c] + crop
+
+		// set host if ContextName empty
+		if t.Options.ContextName == "" {
+			t.Options.ContextName = "default"
+		}
+		gm := wrapBuildMessage(smsg, msg, 3, customExtras, t.Options.ContextName)
+
 		writeMsgErr := gelfWriter.WriteMessage(gm)
 		if writeMsgErr != nil {
 			os.Stderr.WriteString(fmt.Sprintf("Received error when sending GELF message: %s", writeMsgErr.Error()))
 		}
 		return ""
 	} else {
+		vm := Log{
+			Message:        msg,
+			Namespace:      t.Namespace,
+			PodName:        t.PodName,
+			ContainerName:  t.ContainerName,
+			NodeName:       t.NodeName,
+			PodColor:       t.podColor,
+			ContainerColor: t.containerColor,
+		}
+
 		var buf bytes.Buffer
 		err := t.tmpl.Execute(&buf, vm)
 		if err != nil {

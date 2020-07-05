@@ -65,7 +65,6 @@ func Run(ctx context.Context, config *Config) error {
 		}
 		gelfWriter.MaxReconnect = 40
 		gelfWriter.ReconnectDelay = 15
-		//	return errors.Wrap(err, "Graylog Server address unset")
 	}
 
 	var namespace string
