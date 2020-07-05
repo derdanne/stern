@@ -323,6 +323,9 @@ func getKubeConfig() (string, error) {
 	}
 
 	kubeconfig = filepath.Join(home, ".kube/config")
+	if _, err := os.Stat(kubeconfig); os.IsNotExist(err) {
+		return "", nil
+	}
 
 	return kubeconfig, nil
 }
