@@ -33,6 +33,7 @@ type Target struct {
 	Namespace string
 	Pod       string
 	Container string
+	NodeName  string
 }
 
 // GetID returns the ID of the object
@@ -86,6 +87,7 @@ func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, con
 								Namespace: pod.Namespace,
 								Pod:       pod.Name,
 								Container: c.Name,
+								NodeName:  pod.Spec.NodeName,
 							}
 						}
 					}
@@ -106,6 +108,7 @@ func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, con
 							Namespace: pod.Namespace,
 							Pod:       pod.Name,
 							Container: c.Name,
+							NodeName:  pod.Spec.NodeName,
 						}
 					}
 				}

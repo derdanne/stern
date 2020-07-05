@@ -38,6 +38,7 @@ type Tail struct {
 	Namespace      string
 	PodName        string
 	ContainerName  string
+	NodeName       string
 	Options        *TailOptions
 	req            *rest.Request
 	closed         chan struct{}
@@ -58,11 +59,12 @@ type TailOptions struct {
 }
 
 // NewTail returns a new tail for a Kubernetes container inside a pod
-func NewTail(namespace, podName, containerName string, tmpl *template.Template, options *TailOptions) *Tail {
+func NewTail(namespace, podName, containerName string, nodeName string, tmpl *template.Template, options *TailOptions) *Tail {
 	return &Tail{
 		Namespace:     namespace,
 		PodName:       podName,
 		ContainerName: containerName,
+		NodeName:      nodeName,
 		Options:       options,
 		closed:        make(chan struct{}),
 		tmpl:          tmpl,
@@ -198,6 +200,7 @@ func (t *Tail) Print(msg string, gelfWriter *gelf.TCPWriter) string {
 		Namespace:      t.Namespace,
 		PodName:        t.PodName,
 		ContainerName:  t.ContainerName,
+		NodeName:       t.NodeName,
 		PodColor:       t.podColor,
 		ContainerColor: t.containerColor,
 	}
@@ -206,6 +209,7 @@ func (t *Tail) Print(msg string, gelfWriter *gelf.TCPWriter) string {
 		"Namespace":     t.Namespace,
 		"PodName":       t.PodName,
 		"ContainerName": t.ContainerName,
+		"NodeName":      t.NodeName,
 	}
 
 	// build gelf short_message
@@ -216,13 +220,12 @@ func (t *Tail) Print(msg string, gelfWriter *gelf.TCPWriter) string {
 		c = 50
 		crop = " ..."
 	}
-	smsg := "Log event in " + t.Namespace + " from " + t.ContainerName + " in " + t.PodName + ": " + msg[0:c] + crop
+	smsg := "Log event in " + t.Namespace + " from " + t.ContainerName + " in " + t.PodName + " on " + t.NodeName + ": " + msg[0:c] + crop
 
 	// set host if ContextName empty
 	if t.Options.ContextName == "" {
 		t.Options.ContextName = "default"
 	}
-
 	gm := wrapBuildMessage(smsg, msg, 3, customExtras, t.Options.ContextName)
 
 	if t.Options.GraylogServer != "" {
@@ -256,6 +259,9 @@ type Log struct {
 
 	// ContainerName of the container
 	ContainerName string `json:"containerName"`
+
+	// Name of the node the pod is running on
+	NodeName string `json:"nodeName"`
 
 	PodColor       *color.Color `json:"-"`
 	ContainerColor *color.Color `json:"-"`
