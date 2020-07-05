@@ -22,9 +22,9 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"text/template"
 	"time"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -36,7 +36,7 @@ import (
 	"github.com/fatih/color"
 )
 
-const version = "1.11.0"
+const version = "master"
 
 type Options struct {
 	container        string
@@ -276,7 +276,7 @@ func parseConfig(args []string) (*stern.Config, error) {
 
 	if opts.graylogServer == "" {
 		err = nil
-		return nil,  errors.New("Graylog Server address is mandatory")
+		return nil, errors.New("Graylog Server address is mandatory")
 	}
 
 	if strings.HasPrefix(opts.graylogServer, "tcp://") {

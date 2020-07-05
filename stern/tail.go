@@ -16,6 +16,7 @@ package stern
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"hash/fnv"
@@ -23,13 +24,14 @@ import (
 	"regexp"
 	"text/template"
 
+	"time"
+
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/rest"
 	"gopkg.in/Graylog2/go-gelf.v2/gelf"
-	"time"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/rest"
 )
 
 type Tail struct {
@@ -45,14 +47,14 @@ type Tail struct {
 }
 
 type TailOptions struct {
-	Timestamps     bool
-	SinceSeconds   int64
-	Exclude        []*regexp.Regexp
-	Include        []*regexp.Regexp
-	Namespace      bool
-	TailLines      *int64
-	ContextName    string
-	GraylogServer  string
+	Timestamps    bool
+	SinceSeconds  int64
+	Exclude       []*regexp.Regexp
+	Include       []*regexp.Regexp
+	Namespace     bool
+	TailLines     *int64
+	ContextName   string
+	GraylogServer string
 }
 
 // NewTail returns a new tail for a Kubernetes container inside a pod
@@ -86,17 +88,17 @@ func determineColor(podName string) (podColor, containerColor *color.Color) {
 }
 
 // Start starts tailing
-func (t *Tail) Start(ctx context.Context, i v1.PodInterface, gelfWriter *gelf.TCPWriter ) {
+func (t *Tail) Start(ctx context.Context, i v1.PodInterface, gelfWriter *gelf.TCPWriter, logC chan<- string) {
 	t.podColor, t.containerColor = determineColor(t.PodName)
-	
+
 	go func() {
 		g := color.New(color.FgHiGreen, color.Bold).SprintFunc()
 		p := t.podColor.SprintFunc()
 		c := t.containerColor.SprintFunc()
 		if t.Options.Namespace {
-			fmt.Fprintf(os.Stderr, "%s %s %s › %s\n", g("+"), p(t.Namespace), p(t.PodName), c(t.ContainerName))
+			logC <- fmt.Sprintf("%s %s %s › %s\n", g("+"), p(t.Namespace), p(t.PodName), c(t.ContainerName))
 		} else {
-			fmt.Fprintf(os.Stderr, "%s %s › %s\n", g("+"), p(t.PodName), c(t.ContainerName))
+			logC <- fmt.Sprintf("%s %s › %s\n", g("+"), p(t.PodName), c(t.ContainerName))
 		}
 
 		req := i.GetLogs(t.PodName, &corev1.PodLogOptions{
@@ -144,11 +146,11 @@ func (t *Tail) Start(ctx context.Context, i v1.PodInterface, gelfWriter *gelf.TC
 						break
 					}
 				}
- 				if !matches {
+				if !matches {
 					continue OUTER
 				}
 			}
-			t.Print(str, gelfWriter)
+			logC <- t.Print(str, gelfWriter)
 		}
 	}()
 
@@ -171,11 +173,12 @@ func (t *Tail) Close() {
 }
 
 // Build Graylog message
-func wrapBuildMessage(f string, l int32, ex map[string]interface{}, h string) *gelf.Message {
+func wrapBuildMessage(s string, f string, l int32, ex map[string]interface{}, h string) *gelf.Message {
 
 	m := &gelf.Message{
 		Version:  "1.1",
 		Host:     h,
+		Short:    s,
 		Full:     f,
 		TimeUnix: float64(time.Now().Unix()),
 		Level:    l,
@@ -185,7 +188,11 @@ func wrapBuildMessage(f string, l int32, ex map[string]interface{}, h string) *g
 }
 
 // Print prints a color coded log message with the pod and container names
-func (t *Tail) Print(msg string, gelfWriter *gelf.TCPWriter) {
+func (t *Tail) Print(msg string, gelfWriter *gelf.TCPWriter) string {
+	var c int
+	var crop string
+	lengthmsg := len(msg)
+
 	vm := Log{
 		Message:        msg,
 		Namespace:      t.Namespace,
@@ -196,22 +203,40 @@ func (t *Tail) Print(msg string, gelfWriter *gelf.TCPWriter) {
 	}
 
 	customExtras := map[string]interface{}{
-		"Namespace":     t.Namespace, 
-		"PodName":       t.PodName, 
+		"Namespace":     t.Namespace,
+		"PodName":       t.PodName,
 		"ContainerName": t.ContainerName,
 	}
 
-	gm := wrapBuildMessage(msg, int32(3), customExtras, t.Options.ContextName)
+	// build gelf short_message
+	if lengthmsg < 50 {
+		c = lengthmsg - 1
+		crop = ""
+	} else {
+		c = 50
+		crop = " ..."
+	}
+	smsg := "Log event in " + t.Namespace + " from " + t.ContainerName + " in " + t.PodName + ": " + msg[0:c] + crop
+
+	// set host if ContextName empty
+	if t.Options.ContextName == "" {
+		t.Options.ContextName = "default"
+	}
+
+	gm := wrapBuildMessage(smsg, msg, 3, customExtras, t.Options.ContextName)
 
 	writeMsgErr := gelfWriter.WriteMessage(gm)
 	if writeMsgErr != nil {
 		os.Stderr.WriteString(fmt.Sprintf("Received error when sending GELF message: %s", writeMsgErr.Error()))
 	}
 
-	err := t.tmpl.Execute(os.Stdout, vm)
+	var buf bytes.Buffer
+	err := t.tmpl.Execute(&buf, vm)
 	if err != nil {
-	 	os.Stderr.WriteString(fmt.Sprintf("expanding template failed: %s", err))
+		os.Stderr.WriteString(fmt.Sprintf("expanding template failed: %s", err))
+		return ""
 	}
+	return buf.String()
 }
 
 // Log is the object which will be used together with the template to generate
