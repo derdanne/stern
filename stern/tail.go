@@ -42,6 +42,7 @@ type Tail struct {
 	Options        *TailOptions
 	req            *rest.Request
 	closed         chan struct{}
+	Active         bool
 	podColor       *color.Color
 	containerColor *color.Color
 	tmpl           *template.Template
@@ -67,6 +68,7 @@ func NewTail(namespace, podName, containerName string, nodeName string, tmpl *te
 		NodeName:      nodeName,
 		Options:       options,
 		closed:        make(chan struct{}),
+		Active:        true,
 		tmpl:          tmpl,
 	}
 }
@@ -114,6 +116,7 @@ func (t *Tail) Start(ctx context.Context, i v1.PodInterface, gelfWriter *gelf.TC
 		stream, err := req.Stream()
 		if err != nil {
 			fmt.Println(errors.Wrapf(err, "Error opening stream to %s/%s: %s\n", t.Namespace, t.PodName, t.ContainerName))
+			t.Active = false
 			return
 		}
 		defer stream.Close()
@@ -121,6 +124,7 @@ func (t *Tail) Start(ctx context.Context, i v1.PodInterface, gelfWriter *gelf.TC
 		go func() {
 			<-t.closed
 			stream.Close()
+			t.Active = false
 		}()
 
 		reader := bufio.NewReader(stream)

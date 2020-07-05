@@ -20,6 +20,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -94,6 +95,7 @@ func Run(ctx context.Context, config *Config) error {
 	}
 
 	tails := make(map[string]*Tail)
+	tailsMutex := sync.RWMutex{}
 	logC := make(chan string, 1024)
 
 	go func() {
@@ -110,8 +112,18 @@ func Run(ctx context.Context, config *Config) error {
 	go func() {
 		for p := range added {
 			id := p.GetID()
-			if tails[id] != nil {
-				continue
+			tailsMutex.RLock()
+			existing := tails[id]
+			tailsMutex.RUnlock()
+			if existing != nil {
+				if existing.Active == true {
+					continue
+				} else { // cleanup failed tail to restart
+					tailsMutex.Lock()
+					tails[id].Close()
+					delete(tails, id)
+					tailsMutex.Unlock()
+				}
 			}
 
 			tail := NewTail(p.Namespace, p.Pod, p.Container, p.NodeName, config.Template, &TailOptions{
@@ -124,8 +136,9 @@ func Run(ctx context.Context, config *Config) error {
 				ContextName:   config.ContextName,
 				GraylogServer: config.GraylogServer,
 			})
+			tailsMutex.Lock()
 			tails[id] = tail
-
+			tailsMutex.Unlock()
 			tail.Start(ctx, clientset.CoreV1().Pods(p.Namespace), gelfWriter, logC)
 		}
 	}()
@@ -133,11 +146,16 @@ func Run(ctx context.Context, config *Config) error {
 	go func() {
 		for p := range removed {
 			id := p.GetID()
-			if tails[id] == nil {
+			tailsMutex.RLock()
+			existing := tails[id]
+			tailsMutex.RUnlock()
+			if existing == nil {
 				continue
 			}
+			tailsMutex.Lock()
 			tails[id].Close()
 			delete(tails, id)
+			tailsMutex.Unlock()
 		}
 	}()
 
