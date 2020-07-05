@@ -55,7 +55,7 @@ jobs:
             -ldflags="-s -X github.com/derdanne/stern.GitCommit=${GITHUB_SHA::8} -X github.com/derdanne/stern.PatchVersion=$(( ($(date +%s) - $(date --date=20150101 +%s) )/(60*60*24) )) -X github.com/derdanne/stern.Compiled=$(date +%s)" \
             -installsuffix cgo \
             -o artifacts/latest/windows_amd64/stern.exe
-            tar czf stern_windows_amd64.tar.gz -C artifacts/latest/windows_amd64 stern
+            tar czf stern_windows_amd64.tar.gz -C artifacts/latest/windows_amd64 stern.exe
 
     - name: Upload build linux amd64
       uses: actions/upload-artifact@v1
