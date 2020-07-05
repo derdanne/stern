@@ -1,0 +1,55 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.14
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Get dependencies
+      run: go mod download
+
+    - name: Build linux amd64
+      run: |
+        mkdir -p artifacts/latest/linux_amd64
+        export CGO_ENABLED=0
+        GOOS=linux GOARCH=amd64 go build \
+            -ldflags="-s -X github.com/derdanne/stern.GitCommit=${{ github.ref }} -X github.com/derdanne/stern.PatchVersion=$(( ($(date +%s) - $(date --date=20150101 +%s) )/(60*60*24) )) -X github.com/derdanne/stern.Compiled=$(date +%s)" \
+            -installsuffix cgo \
+            -o artifacts/latest/linux_amd64/stern
+
+    - name: Build darwin amd64
+      run: |
+            mkdir -p artifacts/latest/darwin_amd64
+            export CGO_ENABLED=0
+            GOOS=darwin GOARCH=amd64 go build \
+                -ldflags="-s -X github.com/derdanne/stern.GitCommit=${{ github.ref }} -X github.com/derdanne/stern.PatchVersion=$(( ($(date +%s) - $(date --date=20150101 +%s) )/(60*60*24) )) -X github.com/derdanne/stern.Compiled=$(date +%s)" \
+                -installsuffix cgo \
+                -o artifacts/latest/darwin_amd64/stern
+
+    - name: Build windows amd64
+      run: |
+        mkdir -p artifacts/latest/windows_amd64
+        export CGO_ENABLED=0
+        GOOS=windows GOARCH=amd64 go build \
+            -ldflags="-s -X github.com/derdanne/stern.GitCommit=${{ github.ref }} -X github.com/derdanne/stern.PatchVersion=$(( ($(date +%s) - $(date --date=20150101 +%s) )/(60*60*24) )) -X github.com/derdanne/stern.Compiled=$(date +%s)" \
+            -installsuffix cgo \
+            -o artifacts/latest/windows_amd64/stern.exe
+
+    - name: Test
+      run: go test -v .
