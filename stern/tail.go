@@ -225,11 +225,12 @@ func (t *Tail) Print(msg string, gelfWriter *gelf.TCPWriter) string {
 
 	gm := wrapBuildMessage(smsg, msg, 3, customExtras, t.Options.ContextName)
 
-	writeMsgErr := gelfWriter.WriteMessage(gm)
-	if writeMsgErr != nil {
-		os.Stderr.WriteString(fmt.Sprintf("Received error when sending GELF message: %s", writeMsgErr.Error()))
+	if t.Options.GraylogServer != "" {
+		writeMsgErr := gelfWriter.WriteMessage(gm)
+		if writeMsgErr != nil {
+			os.Stderr.WriteString(fmt.Sprintf("Received error when sending GELF message: %s", writeMsgErr.Error()))
+		}
 	}
-
 	var buf bytes.Buffer
 	err := t.tmpl.Execute(&buf, vm)
 	if err != nil {

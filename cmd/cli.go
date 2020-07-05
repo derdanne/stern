@@ -274,11 +274,6 @@ func parseConfig(args []string) (*stern.Config, error) {
 		opts.since = 172800000000000 // 48h
 	}
 
-	if opts.graylogServer == "" {
-		err = nil
-		return nil, errors.New("Graylog Server address is mandatory")
-	}
-
 	if strings.HasPrefix(opts.graylogServer, "tcp://") {
 		err = nil
 		return nil, errors.New("specify Graylog Server address without tcp:// prefix")

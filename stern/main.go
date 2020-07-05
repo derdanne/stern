@@ -37,36 +37,35 @@ func Run(ctx context.Context, config *Config) error {
 		return err
 	}
 
-	if config.GraylogServer == "" {
-		return errors.Wrap(err, "Graylog Server address unset")
-	}
-
 	var writerErr error
 	var gelfWriter *gelf.TCPWriter
 	var sleep time.Duration = time.Second * 10
 
-	for {
-		gelfWriter, writerErr = gelf.NewTCPWriter(config.GraylogServer)
-		if writerErr != nil {
-			if config.GraylogRetries--; config.GraylogRetries > 0 {
-				// Add some randomness to prevent creating a Thundering Herd
-				jitter := time.Duration(rand.Int63n(int64(sleep)))
-				sleep = (sleep + jitter/2)
-				timeNow := time.Now().Format("2006/01/02 15:04:05")
-				os.Stderr.WriteString(fmt.Sprintf(timeNow+" Could not connect to Graylog Server, next retry in %s. "+strconv.Itoa(config.GraylogRetries)+" retries left. \n", sleep.Round(time.Second)))
-				time.Sleep(sleep)
-				gelfWriter = nil
-				writerErr = nil
-				continue
+	if config.GraylogServer != "" {
+		for {
+			gelfWriter, writerErr = gelf.NewTCPWriter(config.GraylogServer)
+			if writerErr != nil {
+				if config.GraylogRetries--; config.GraylogRetries > 0 {
+					// Add some randomness to prevent creating a Thundering Herd
+					jitter := time.Duration(rand.Int63n(int64(sleep)))
+					sleep = (sleep + jitter/2)
+					timeNow := time.Now().Format("2006/01/02 15:04:05")
+					os.Stderr.WriteString(fmt.Sprintf(timeNow+" Could not connect to Graylog Server, next retry in %s. "+strconv.Itoa(config.GraylogRetries)+" retries left. \n", sleep.Round(time.Second)))
+					time.Sleep(sleep)
+					gelfWriter = nil
+					writerErr = nil
+					continue
+				} else {
+					return errors.Wrap(writerErr, "setup gelf writer failed")
+				}
 			} else {
-				return errors.Wrap(writerErr, "setup gelf writer failed")
+				break
 			}
-		} else {
-			break
 		}
+		gelfWriter.MaxReconnect = 40
+		gelfWriter.ReconnectDelay = 15
+		//	return errors.Wrap(err, "Graylog Server address unset")
 	}
-	gelfWriter.MaxReconnect = 40
-	gelfWriter.ReconnectDelay = 15
 
 	var namespace string
 	// A specific namespace is ignored if all-namespaces is provided
