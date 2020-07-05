@@ -1,5 +1,7 @@
 # stern
 
+![Go](https://github.com/derdanne/stern/workflows/Go/badge.svg?branch=master)
+
 Stern allows you to `tail` multiple pods on Kubernetes and multiple containers
 within the pod. Each result is color coded for quicker debugging.
 
