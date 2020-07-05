@@ -36,7 +36,7 @@ import (
 	"github.com/fatih/color"
 )
 
-const version = "2.0.0"
+const version = "2.1.0"
 
 type Options struct {
 	container        string
