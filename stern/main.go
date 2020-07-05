@@ -22,6 +22,8 @@ import (
 	"time"
 	"math/rand"
 	"fmt"
+	"os"
+	"strconv"
 )
 
 // Run starts the main run loop
@@ -34,25 +36,23 @@ func Run(ctx context.Context, config *Config) error {
 		return err
 	}
 	
-	var graylogAddress string
-	graylogAddress = config.GraylogAddress
-	if graylogAddress == "" {
+	if config.GraylogServer == "" {
 		return errors.Wrap(err, "Graylog Server address unset")
 	}
 
 	var writerErr error
 	var gelfWriter *gelf.TCPWriter
-	var attempts int = 10
 	var sleep time.Duration = time.Second * 10
 
 	for {
-		gelfWriter, writerErr = gelf.NewTCPWriter(graylogAddress)
+		gelfWriter, writerErr = gelf.NewTCPWriter(config.GraylogServer)
 		if writerErr != nil {
- 			if attempts--; attempts > 0 {
+ 			if config.GraylogRetries--; config.GraylogRetries > 0 {
 				// Add some randomness to prevent creating a Thundering Herd
  				jitter := time.Duration(rand.Int63n(int64(sleep)))
- 				sleep = sleep + jitter/2
- 				fmt.Println("sleep")
+				sleep = (sleep + jitter/2)
+				timeNow := time.Now().Format("2006/01/02 15:04:05")
+				os.Stderr.WriteString(fmt.Sprintf( timeNow + " Could not connect to Graylog Server, next retry in %s. " + strconv.Itoa(config.GraylogRetries) + " retries left. \n", sleep.Round(time.Second)))
 				time.Sleep(sleep)
 				gelfWriter = nil
 				writerErr = nil
@@ -103,7 +103,7 @@ func Run(ctx context.Context, config *Config) error {
 				Namespace:      config.AllNamespaces,
 				TailLines:      config.TailLines,
 				ContextName:    config.ContextName,
-				GraylogAddress: config.GraylogAddress,
+				GraylogServer:  config.GraylogServer,
 			})
 			tails[id] = tail
 

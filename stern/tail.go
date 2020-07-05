@@ -52,7 +52,7 @@ type TailOptions struct {
 	Namespace      bool
 	TailLines      *int64
 	ContextName    string
-	GraylogAddress string
+	GraylogServer  string
 }
 
 // NewTail returns a new tail for a Kubernetes container inside a pod

@@ -24,6 +24,7 @@ import (
 	"regexp"
 	"text/template"
 	"time"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -57,6 +58,7 @@ type Options struct {
 	template         string
 	output           string
 	graylogServer    string
+	graylogRetries   int
 }
 
 var opts = &Options{
@@ -66,6 +68,7 @@ var opts = &Options{
 	color:          "auto",
 	template:       "",
 	output:         "default",
+	graylogRetries: 100,
 }
 
 func Run() {
@@ -93,7 +96,8 @@ func Run() {
 	cmd.Flags().StringVar(&opts.completion, "completion", opts.completion, "Outputs stern command-line completion code for the specified shell. Can be 'bash' or 'zsh'")
 	cmd.Flags().StringVar(&opts.template, "template", opts.template, "Template to use for log lines, leave empty to use --output flag")
 	cmd.Flags().StringVarP(&opts.output, "output", "o", opts.output, "Specify predefined template. Currently support: [default, raw, json]")
-	cmd.Flags().StringVar(&opts.graylogServer, "graylogserver", opts.graylogServer, "Specify Graylog Server address to send logs to via GELF")
+	cmd.Flags().StringVarP(&opts.graylogServer, "graylog-server", "g", opts.graylogServer, "Specify Graylog Server address to send logs to via GELF")
+	cmd.Flags().IntVarP(&opts.graylogRetries, "graylog-retries", "r", opts.graylogRetries, "Specify Graylog Server connection retries")
 
 	// Specify custom bash completion function
 	cmd.BashCompletionFunction = bash_completion_func
@@ -270,7 +274,15 @@ func parseConfig(args []string) (*stern.Config, error) {
 		opts.since = 172800000000000 // 48h
 	}
 
-	graylogServer := opts.graylogServer
+	if opts.graylogServer == "" {
+		err = nil
+		return nil,  errors.New("Graylog Server address is mandatory")
+	}
+
+	if strings.HasPrefix(opts.graylogServer, "tcp://") {
+		err = nil
+		return nil, errors.New("specify Graylog Server address without tcp:// prefix")
+	}
 
 	return &stern.Config{
 		KubeConfig:            kubeConfig,
@@ -288,7 +300,8 @@ func parseConfig(args []string) (*stern.Config, error) {
 		LabelSelector:         labelSelector,
 		TailLines:             tailLines,
 		Template:              template,
-		GraylogAddress:        graylogServer,
+		GraylogServer:         opts.graylogServer,
+		GraylogRetries:        opts.graylogRetries,
 	}, nil
 }
 

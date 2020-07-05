@@ -39,5 +39,6 @@ type Config struct {
 	LabelSelector         labels.Selector
 	TailLines             *int64
 	Template              *template.Template
-	GraylogAddress        string
+	GraylogServer         string
+	GraylogRetries		  int
 }
