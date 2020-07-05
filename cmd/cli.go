@@ -1,4 +1,4 @@
-//   Copyright 2016 Wercker Holding BV
+//   Copyright 2020
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ import (
 
 	"k8s.io/apimachinery/pkg/labels"
 
+	"github.com/derdanne/stern/stern"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/wercker/stern/stern"
 
 	"github.com/fatih/color"
 )

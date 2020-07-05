@@ -1,7 +1,5 @@
 # stern
 
-[![wercker status](https://app.wercker.com/status/fb1ed340ffed75c22dc301c38ab0893c/s/master "wercker status")](https://app.wercker.com/project/byKey/fb1ed340ffed75c22dc301c38ab0893c)
-
 Stern allows you to `tail` multiple pods on Kubernetes and multiple containers
 within the pod. Each result is color coded for quicker debugging.
 
@@ -26,23 +24,16 @@ limit what containers to show. By default all containers are listened to.
 
 ## Installation
 
-If you don't want to build from source go grab a [binary release](https://github.com/wercker/stern/releases)
+If you don't want to build from source go grab a [binary release](https://github.com/derdanne/stern/releases)
 
-[Govendor](https://github.com/kardianos/govendor) is required to install vendored dependencies.
+Go mod is used to install vendored dependencies.
 
 ```
-mkdir -p $GOPATH/src/github.com/wercker
-cd $GOPATH/src/github.com/wercker
-git clone https://github.com/wercker/stern.git && cd stern
-govendor sync
+mkdir -p $GOPATH/src/github.com/derdanne
+cd $GOPATH/src/github.com/derdanne
+git clone https://github.com/derdanne/stern.git && cd stern
+go mod download
 go install
-```
-
-### Homebrew
-
-On macOS, you can also install Stern using [Homebrew](https://brew.sh/):
-```
-brew install stern
 ```
 
 ## Usage
@@ -215,3 +206,5 @@ source <(stern --completion=zsh)
 
 Oracle welcomes contributions to this repository from anyone.  Please see
 [CONTRIBUTING](CONTRIBUTING.md) for details.
+
+This module based on Wercker Holding BV "Stern" from https://github.com/wercker/stern.
