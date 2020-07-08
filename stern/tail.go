@@ -56,6 +56,7 @@ type TailOptions struct {
 	Namespace     bool
 	TailLines     *int64
 	ContextName   string
+	ClusterName   string
 	GraylogServer string
 }
 
@@ -218,10 +219,17 @@ func (t *Tail) Print(msg string, gelfWriter *gelf.TCPWriter) string {
 		smsg := "Log event in " + t.Namespace + " from " + t.ContainerName + " in " + t.PodName + " on " + t.NodeName + ": " + msg[0:c] + crop
 
 		// set host if ContextName empty
-		if t.Options.ContextName == "" {
-			t.Options.ContextName = "default"
+		var host string
+		if t.Options.ClusterName != "" {
+			host = t.Options.ClusterName
+		} else {
+			if t.Options.ContextName == "" {
+				host = "default"
+			} else {
+				host = t.Options.ContextName
+			}
 		}
-		gm := wrapBuildMessage(smsg, msg, 3, customExtras, t.Options.ContextName)
+		gm := wrapBuildMessage(smsg, msg, 3, customExtras, host)
 
 		writeMsgErr := gelfWriter.WriteMessage(gm)
 		if writeMsgErr != nil {

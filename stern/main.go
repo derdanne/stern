@@ -64,8 +64,8 @@ func Run(ctx context.Context, config *Config) error {
 				break
 			}
 		}
-		gelfWriter.MaxReconnect = 40
-		gelfWriter.ReconnectDelay = 15
+		gelfWriter.MaxReconnect = 60
+		gelfWriter.ReconnectDelay = 5
 	}
 
 	var namespace string
@@ -138,6 +138,7 @@ func Run(ctx context.Context, config *Config) error {
 					Namespace:     config.AllNamespaces,
 					TailLines:     config.TailLines,
 					ContextName:   config.ContextName,
+					ClusterName:   config.ClusterName,
 					GraylogServer: config.GraylogServer,
 				})
 				tailsMutex.Lock()

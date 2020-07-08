@@ -45,6 +45,7 @@ type Options struct {
 	timestamps       bool
 	since            time.Duration
 	context          string
+	cluster          string
 	namespace        string
 	kubeConfig       string
 	exclude          []string
@@ -84,6 +85,7 @@ func Run() {
 	cmd.Flags().BoolVarP(&opts.timestamps, "timestamps", "t", opts.timestamps, "Print timestamps")
 	cmd.Flags().DurationVarP(&opts.since, "since", "s", opts.since, "Return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to 48h.")
 	cmd.Flags().StringVar(&opts.context, "context", opts.context, "Kubernetes context to use. Default to current context configured in kubeconfig.")
+	cmd.Flags().StringVar(&opts.cluster, "cluster", opts.cluster, "Kubernetes cluster identifier. Will override contextname as host in GELF message")
 	cmd.Flags().StringVarP(&opts.namespace, "namespace", "n", opts.namespace, "Kubernetes namespace to use (multiple namespaces comma seperated). Default to namespace configured in Kubernetes context")
 	cmd.Flags().StringVar(&opts.kubeConfig, "kubeconfig", opts.kubeConfig, "Path to kubeconfig file to use")
 	cmd.Flags().StringVar(&opts.kubeConfig, "kube-config", opts.kubeConfig, "Path to kubeconfig file to use")
@@ -297,6 +299,7 @@ func parseConfig(args []string) (*stern.Config, error) {
 		Timestamps:            opts.timestamps,
 		Since:                 opts.since,
 		ContextName:           opts.context,
+		ClusterName:           opts.cluster,
 		Namespace:             opts.namespace,
 		AllNamespaces:         opts.allNamespaces,
 		LabelSelector:         labelSelector,
