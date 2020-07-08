@@ -21,6 +21,14 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
+    - name: Build docker image
+      run: |
+        docker login docker.pkg.github.com --username derdanne --password "${{ secrets.GITHUB_TOKEN }}"
+        docker build . -t docker.pkg.github.com/derdanne/stern/stern:${{ github.ref }}
+        docker push docker.pkg.github.com/derdanne/stern/stern:${{ github.ref }}
+        docker tag docker.pkg.github.com/derdanne/stern/stern:${{ github.ref }} docker.pkg.github.com/derdanne/stern/stern:latest
+        docker push docker.pkg.github.com/derdanne/stern/stern:latest
+
     - name: Get dependencies
       run: go mod download
 
