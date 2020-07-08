@@ -20,6 +20,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -81,82 +82,87 @@ func Run(ctx context.Context, config *Config) error {
 		}
 	}
 
-	added, removed, err := Watch(ctx,
-		clientset.CoreV1().Pods(namespace),
-		config.PodQuery,
-		config.ContainerQuery,
-		config.ExcludeContainerQuery,
-		config.InitContainers,
-		config.ContainerState,
-		config.LabelSelector)
-	if err != nil {
-		return errors.Wrap(err, "failed to set up watch")
-	}
-
-	tails := make(map[string]*Tail)
-	tailsMutex := sync.RWMutex{}
-	logC := make(chan string, 1024)
-
-	go func() {
-		for {
-			select {
-			case str := <-logC:
-				fmt.Fprintf(os.Stdout, str)
-			case <-ctx.Done():
-				break
-			}
+	var added chan *Target
+	var removed chan *Target
+	namespaces := strings.Split(namespace, ",")
+	for _, namespace := range namespaces {
+		added, removed, err = Watch(ctx,
+			clientset.CoreV1().Pods(namespace),
+			config.PodQuery,
+			config.ContainerQuery,
+			config.ExcludeContainerQuery,
+			config.InitContainers,
+			config.ContainerState,
+			config.LabelSelector)
+		if err != nil {
+			return errors.Wrap(err, "failed to set up watch")
 		}
-	}()
 
-	go func() {
-		for p := range added {
-			id := p.GetID()
-			tailsMutex.RLock()
-			existing := tails[id]
-			tailsMutex.RUnlock()
-			if existing != nil {
-				if existing.Active == true {
-					continue
-				} else { // cleanup failed tail to restart
-					tailsMutex.Lock()
-					tails[id].Close()
-					delete(tails, id)
-					tailsMutex.Unlock()
+		tails := make(map[string]*Tail)
+		tailsMutex := sync.RWMutex{}
+		logC := make(chan string, 1024)
+
+		go func() {
+			for {
+				select {
+				case str := <-logC:
+					fmt.Fprintf(os.Stdout, str)
+				case <-ctx.Done():
+					break
 				}
 			}
+		}()
 
-			tail := NewTail(p.Namespace, p.Pod, p.Container, p.NodeName, config.Template, &TailOptions{
-				Timestamps:    config.Timestamps,
-				SinceSeconds:  int64(config.Since.Seconds()),
-				Exclude:       config.Exclude,
-				Include:       config.Include,
-				Namespace:     config.AllNamespaces,
-				TailLines:     config.TailLines,
-				ContextName:   config.ContextName,
-				GraylogServer: config.GraylogServer,
-			})
-			tailsMutex.Lock()
-			tails[id] = tail
-			tailsMutex.Unlock()
-			tail.Start(ctx, clientset.CoreV1().Pods(p.Namespace), gelfWriter, logC)
-		}
-	}()
+		go func() {
+			for p := range added {
+				id := p.GetID()
+				tailsMutex.RLock()
+				existing := tails[id]
+				tailsMutex.RUnlock()
+				if existing != nil {
+					if existing.Active == true {
+						continue
+					} else { // cleanup failed tail to restart
+						tailsMutex.Lock()
+						tails[id].Close()
+						delete(tails, id)
+						tailsMutex.Unlock()
+					}
+				}
 
-	go func() {
-		for p := range removed {
-			id := p.GetID()
-			tailsMutex.RLock()
-			existing := tails[id]
-			tailsMutex.RUnlock()
-			if existing == nil {
-				continue
+				tail := NewTail(p.Namespace, p.Pod, p.Container, p.NodeName, config.Template, &TailOptions{
+					Timestamps:    config.Timestamps,
+					SinceSeconds:  int64(config.Since.Seconds()),
+					Exclude:       config.Exclude,
+					Include:       config.Include,
+					Namespace:     config.AllNamespaces,
+					TailLines:     config.TailLines,
+					ContextName:   config.ContextName,
+					GraylogServer: config.GraylogServer,
+				})
+				tailsMutex.Lock()
+				tails[id] = tail
+				tailsMutex.Unlock()
+				tail.Start(ctx, clientset.CoreV1().Pods(p.Namespace), gelfWriter, logC)
 			}
-			tailsMutex.Lock()
-			tails[id].Close()
-			delete(tails, id)
-			tailsMutex.Unlock()
-		}
-	}()
+		}()
+
+		go func() {
+			for p := range removed {
+				id := p.GetID()
+				tailsMutex.RLock()
+				existing := tails[id]
+				tailsMutex.RUnlock()
+				if existing == nil {
+					continue
+				}
+				tailsMutex.Lock()
+				tails[id].Close()
+				delete(tails, id)
+				tailsMutex.Unlock()
+			}
+		}()
+	}
 
 	<-ctx.Done()
 
