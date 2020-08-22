@@ -82,11 +82,19 @@ func Run(ctx context.Context, config *Config) error {
 		}
 	}
 
+	var w sync.WaitGroup
+	var restarter int
 	var added chan *Target
 	var removed chan *Target
 	restart := make(chan bool)
 	namespaces := strings.Split(namespace, ",")
 	for {
+		if config.AllNamespaces {
+			restarter = 1
+		} else {
+			restarter = len(namespaces)
+		}
+
 		for _, namespace := range namespaces {
 			added, removed, err = Watch(ctx,
 				clientset.CoreV1().Pods(namespace),
@@ -107,16 +115,21 @@ func Run(ctx context.Context, config *Config) error {
 			logC := make(chan string, 1024)
 
 			go func() {
-				select { // cleanup objects after timed out or failed watcher
-				case <-restart:
-					for id := range tails {
-						tailsMutex.Lock()
-						tails[id].Close()
-						delete(tails, id)
-						tailsMutex.Unlock()
-					}
-					logC = nil
+				defer w.Done()
+				w.Add(1)
+				r := <-restart
+				// propagate restart
+				restarter--
+				if restarter > 0 {
+					restart <- r
 				}
+				for id := range tails {
+					tailsMutex.Lock()
+					tails[id].Close()
+					delete(tails, id)
+					tailsMutex.Unlock()
+				}
+				close(logC)
 			}()
 
 			go func() {
@@ -131,6 +144,8 @@ func Run(ctx context.Context, config *Config) error {
 			}()
 
 			go func() {
+				defer w.Done()
+				w.Add(1)
 				for p := range added {
 					id := p.GetID()
 					tailsMutex.RLock()
@@ -166,6 +181,8 @@ func Run(ctx context.Context, config *Config) error {
 			}()
 
 			go func() {
+				defer w.Done()
+				w.Add(1)
 				for p := range removed {
 					id := p.GetID()
 					tailsMutex.RLock()
@@ -183,7 +200,10 @@ func Run(ctx context.Context, config *Config) error {
 		}
 
 		if <-restart { // restart watch but only replay last second
-			restart <- false
+			if config.AllNamespaces && restarter > 0 {
+				restart <- true
+			}
+			w.Wait()
 			config.Since = 1 * time.Second
 			continue
 		}
