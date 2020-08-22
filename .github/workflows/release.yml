@@ -23,11 +23,12 @@ jobs:
 
     - name: Build docker image
       run: |
+        export TAG=$(echo ${GITHUB_REF#refs/tags/} | sed 's/\//_/g')
         docker login docker.pkg.github.com --username derdanne --password "${{ secrets.GITHUB_TOKEN }}"
-        docker build . -t docker.pkg.github.com/derdanne/stern/stern:$(echo ${GITHUB_REF#refs/tags/} | sed 's/\//_/g')
-        docker push docker.pkg.github.com/derdanne/stern/stern:$(echo ${GITHUB_REF#refs/tags/} | sed 's/\//_/g')
-        docker tag docker.pkg.github.com/derdanne/stern/stern:$(echo ${GITHUB_REF#refs/tags/} | sed 's/\//_/g') docker.pkg.github.com/derdanne/stern/stern:latest
+        docker build . -t docker.pkg.github.com/derdanne/stern/stern:latest
         docker push docker.pkg.github.com/derdanne/stern/stern:latest
+        docker tag docker.pkg.github.com/derdanne/stern/stern:latest docker.pkg.github.com/derdanne/stern/stern:${TAG}
+        docker push docker.pkg.github.com/derdanne/stern/stern:${TAG}
 
     - name: Get dependencies
       run: go mod download
