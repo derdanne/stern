@@ -45,7 +45,7 @@ func (t *Target) GetID() string {
 // containers/pods. The first result is targets added, the second is targets
 // removed
 
-func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, containerFilter *regexp.Regexp, containerExcludeFilter *regexp.Regexp, initContainers bool, containerState ContainerState, labelSelector labels.Selector, timeoutSeconds int64, restart chan bool) (chan *Target, chan *Target, error) {
+func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, containerFilter *regexp.Regexp, containerExcludeFilter *regexp.Regexp, initContainers bool, containerState ContainerState, labelSelector labels.Selector, timeoutSeconds int64, closed chan bool, restart chan bool) (chan *Target, chan *Target, error) {
 	watcher, err := i.Watch(metav1.ListOptions{Watch: true, TimeoutSeconds: &timeoutSeconds, LabelSelector: labelSelector.String()})
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to set up watch")
@@ -59,6 +59,7 @@ func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, con
 			select {
 			case e, ok := <-watcher.ResultChan():
 				if !ok { // restart watch after client timeout or failed watch
+					closed <- true
 					restart <- true
 					close(added)
 					close(removed)

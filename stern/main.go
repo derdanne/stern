@@ -83,18 +83,15 @@ func Run(ctx context.Context, config *Config) error {
 	}
 
 	var w sync.WaitGroup
-	var restarter int
 	var added chan *Target
 	var removed chan *Target
+	closed := make(chan bool)
 	restart := make(chan bool)
 	namespaces := strings.Split(namespace, ",")
-	for {
-		if config.AllNamespaces {
-			restarter = 1
-		} else {
-			restarter = len(namespaces)
-		}
+	watcherCount := len(namespaces)
 
+OUTER:
+	for {
 		for _, namespace := range namespaces {
 			added, removed, err = Watch(ctx,
 				clientset.CoreV1().Pods(namespace),
@@ -105,6 +102,7 @@ func Run(ctx context.Context, config *Config) error {
 				config.ContainerState,
 				config.LabelSelector,
 				clientTimeoutSeconds,
+				closed,
 				restart)
 			if err != nil {
 				return errors.Wrap(err, "failed to set up watch")
@@ -117,19 +115,18 @@ func Run(ctx context.Context, config *Config) error {
 			go func() {
 				defer w.Done()
 				w.Add(1)
-				r := <-restart
-				// propagate restart
-				restarter--
-				if restarter > 0 {
-					restart <- r
+				select {
+				case <-closed:
+					for id := range tails {
+						tailsMutex.Lock()
+						tails[id].Close()
+						delete(tails, id)
+						tailsMutex.Unlock()
+					}
+					logC = nil
+				case <-ctx.Done():
+					break
 				}
-				for id := range tails {
-					tailsMutex.Lock()
-					tails[id].Close()
-					delete(tails, id)
-					tailsMutex.Unlock()
-				}
-				close(logC)
 			}()
 
 			go func() {
@@ -199,17 +196,21 @@ func Run(ctx context.Context, config *Config) error {
 			}()
 		}
 
-		if <-restart { // restart watch but only replay last second
-			if config.AllNamespaces && restarter > 0 {
-				restart <- true
+		for {
+			select {
+			case <-restart:
+				watcherCount--
+				if watcherCount == 0 {
+					w.Wait()
+					config.Since = 1 * time.Second
+					watcherCount = len(namespaces)
+					continue OUTER
+				}
+			case <-ctx.Done():
+				break OUTER
 			}
-			w.Wait()
-			config.Since = 1 * time.Second
-			continue
 		}
-
-		<-ctx.Done()
-
-		return nil
 	}
+	<-ctx.Done()
+	return nil
 }
