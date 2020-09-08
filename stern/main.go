@@ -32,7 +32,7 @@ import (
 // Run starts the main run loop
 func Run(ctx context.Context, config *Config) error {
 	rand.Seed(time.Now().UnixNano())
-	clientTimeoutSeconds := int64(86400) // set client go timeout to 1 day
+	clientTimeoutSeconds := int64(config.ClientTimeout)
 	clientConfig := kubernetes.NewClientConfig(config.KubeConfig, config.ContextName)
 	clientset, err := kubernetes.NewClientSet(clientConfig)
 	if err != nil {

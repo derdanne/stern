@@ -61,6 +61,7 @@ type Options struct {
 	output           string
 	graylogServer    string
 	graylogRetries   int
+	clientTimeout    int64
 }
 
 var opts = &Options{
@@ -72,6 +73,7 @@ var opts = &Options{
 	template:       "",
 	output:         "default",
 	graylogRetries: 100,
+	clientTimeout:  3600,
 }
 
 func Run() {
@@ -103,6 +105,7 @@ func Run() {
 	cmd.Flags().StringVarP(&opts.output, "output", "o", opts.output, "Specify predefined template. Currently support: [default, raw, json]")
 	cmd.Flags().StringVarP(&opts.graylogServer, "graylog-server", "g", opts.graylogServer, "Specify Graylog Server address to send logs to via GELF")
 	cmd.Flags().IntVarP(&opts.graylogRetries, "graylog-retries", "r", opts.graylogRetries, "Specify Graylog Server connection retries")
+	cmd.Flags().Int64VarP(&opts.clientTimeout, "client-timeout", "T", opts.clientTimeout, "Specify Kubernetes watch client timeout in seconds")
 
 	// Specify custom bash completion function
 	cmd.BashCompletionFunction = bash_completion_func
@@ -307,6 +310,7 @@ func parseConfig(args []string) (*stern.Config, error) {
 		Template:              template,
 		GraylogServer:         opts.graylogServer,
 		GraylogRetries:        opts.graylogRetries,
+		ClientTimeout:         opts.clientTimeout,
 	}, nil
 }
 

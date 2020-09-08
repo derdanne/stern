@@ -43,4 +43,5 @@ type Config struct {
 	Template              *template.Template
 	GraylogServer         string
 	GraylogRetries        int
+	ClientTimeout         int64
 }

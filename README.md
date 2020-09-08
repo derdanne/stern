@@ -70,6 +70,7 @@ The `pod` query is a regular expression so you could provide `"web-\w"` to tail
 | `--output`           | `default`           | Specify predefined template. Currently support: [default, raw, json] See templates section                               |
 | `--graylog-server`   |                     | Specify Graylog Server address to send logs to via GELF (format: address:port)                                           |
 | `--graylog-retries`  | `100`               | Specify Graylog Server connection retries                                                                                |
+| `--client-timeout`   | `3600`              | Specify Kubernetes watch client timeout in seconds                                                                       |
 | `template`           |                     | Template to use for log lines, leave empty to use --output flag                                                          |
 
 See `stern --help` for details
