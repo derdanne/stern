@@ -58,17 +58,12 @@ func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, con
 		for {
 			select {
 			case e, ok := <-watcher.ResultChan():
-				if !ok { // restart watch after client timeout or failed watch
+				if !ok || e.Object == nil {
 					closed <- true
 					restart <- true
 					close(added)
 					close(removed)
 					watcher.Stop()
-					return
-				}
-
-				if e.Object == nil {
-					// Closed because of error
 					return
 				}
 
@@ -109,7 +104,7 @@ func Watch(ctx context.Context, i v1.PodInterface, podFilter *regexp.Regexp, con
 							removed <- t
 						}
 					}
-				case watch.Deleted:
+				case watch.Deleted, watch.Error:
 					var containers []corev1.Container
 					containers = append(containers, pod.Spec.Containers...)
 					if initContainers {

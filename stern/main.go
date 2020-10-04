@@ -24,8 +24,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/derdanne/stern/kubernetes"
 	"github.com/pkg/errors"
-	"github.com/wercker/stern/kubernetes"
 	"gopkg.in/Graylog2/go-gelf.v2/gelf"
 )
 
@@ -118,6 +118,12 @@ OUTER:
 				select {
 				case <-closed:
 					for id := range tails {
+						tailsMutex.RLock()
+						existing := tails[id]
+						tailsMutex.RUnlock()
+						if existing == nil {
+							continue
+						}
 						tailsMutex.Lock()
 						tails[id].Close()
 						delete(tails, id)

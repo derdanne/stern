@@ -2,6 +2,7 @@
 *.o
 *.a
 *.so
+/stern-develop
 
 # Folders
 _obj
