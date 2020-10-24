@@ -6,6 +6,7 @@ WORKDIR /build
 RUN mkdir bin && \
     GOOS=linux GOARCH=amd64 go build \
             -installsuffix cgo \
+            -ldflags="-s" \
             -o bin/stern
 
 FROM busybox as runtime
