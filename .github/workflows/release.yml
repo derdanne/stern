@@ -15,7 +15,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.14
+        go-version: ^1.15
       id: go
 
     - name: Check out code into the Go module directory
@@ -24,11 +24,11 @@ jobs:
     - name: Build docker image
       run: |
         export TAG=$(echo ${GITHUB_REF#refs/tags/} | sed 's/\//_/g')
-        docker login docker.pkg.github.com --username derdanne --password "${{ secrets.GITHUB_TOKEN }}"
-        docker build . -t docker.pkg.github.com/derdanne/stern/stern:latest
-        docker push docker.pkg.github.com/derdanne/stern/stern:latest
-        docker tag docker.pkg.github.com/derdanne/stern/stern:latest docker.pkg.github.com/derdanne/stern/stern:${TAG}
-        docker push docker.pkg.github.com/derdanne/stern/stern:${TAG}
+        docker login ghcr.io --username derdanne --password "${{ secrets.GHCR_TOKEN }}"
+        docker build . -t ghcr.io/derdanne/stern:latest
+        docker push ghcr.io/derdanne/stern:latest
+        docker tag ghcr.io/derdanne/stern:latest ghcr.io/derdanne/stern:${TAG}
+        docker push ghcr.io/derdanne/sternghcr.io/derdanne/stern:${TAG}
 
     - name: Get dependencies
       run: go mod download
