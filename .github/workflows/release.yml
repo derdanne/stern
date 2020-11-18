@@ -28,7 +28,7 @@ jobs:
         docker build . -t ghcr.io/derdanne/stern:latest
         docker push ghcr.io/derdanne/stern:latest
         docker tag ghcr.io/derdanne/stern:latest ghcr.io/derdanne/stern:${TAG}
-        docker push ghcr.io/derdanne/sternghcr.io/derdanne/stern:${TAG}
+        docker push ghcr.io/derdanne/stern:${TAG}
 
     - name: Get dependencies
       run: go mod download
