@@ -43,6 +43,15 @@ func Run(ctx context.Context, config *Config) error {
 	var gelfWriter *gelf.TCPWriter
 	var sleep time.Duration = time.Second * 10
 
+	if config.ExitAfter > 0 {
+		go func() {
+			time.AfterFunc(config.ExitAfter, func() {
+				println(fmt.Sprintf("Intended shutdown after %s", config.ExitAfter))
+				os.Exit(0)
+			})
+		}()
+	}
+
 	if config.GraylogServer != "" {
 		for {
 			gelfWriter, writerErr = gelf.NewTCPWriter(config.GraylogServer)
@@ -199,15 +208,6 @@ OUTER:
 					delete(tails, id)
 					tailsMutex.Unlock()
 				}
-			}()
-		}
-
-		if config.ExitAfter > 0 {
-			go func() {
-				time.AfterFunc(config.ExitAfter, func() {
-					println(fmt.Sprintf("Intended shutdown after %s", config.ExitAfter))
-					os.Exit(0)
-				})
 			}()
 		}
 
