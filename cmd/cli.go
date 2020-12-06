@@ -36,7 +36,7 @@ import (
 	"github.com/fatih/color"
 )
 
-const version = "2.1.12"
+const version = "2.1.13"
 
 type Options struct {
 	container        string
@@ -62,6 +62,7 @@ type Options struct {
 	graylogServer    string
 	graylogRetries   int
 	clientTimeout    int64
+	exitAfter        time.Duration
 }
 
 var opts = &Options{
@@ -74,6 +75,7 @@ var opts = &Options{
 	output:         "default",
 	graylogRetries: 100,
 	clientTimeout:  3600,
+	exitAfter:      0,
 }
 
 func Run() {
@@ -106,6 +108,7 @@ func Run() {
 	cmd.Flags().StringVarP(&opts.graylogServer, "graylog-server", "g", opts.graylogServer, "Specify Graylog Server address to send logs to via GELF")
 	cmd.Flags().IntVarP(&opts.graylogRetries, "graylog-retries", "r", opts.graylogRetries, "Specify Graylog Server connection retries")
 	cmd.Flags().Int64VarP(&opts.clientTimeout, "client-timeout", "T", opts.clientTimeout, "Specify Kubernetes watch client timeout in seconds")
+	cmd.Flags().DurationVarP(&opts.exitAfter, "exit-after", "X", opts.exitAfter, "Specify after how much time the program will exit. Default is not to exit")
 
 	// Specify custom bash completion function
 	cmd.BashCompletionFunction = bash_completion_func
@@ -311,6 +314,7 @@ func parseConfig(args []string) (*stern.Config, error) {
 		GraylogServer:         opts.graylogServer,
 		GraylogRetries:        opts.graylogRetries,
 		ClientTimeout:         opts.clientTimeout,
+		ExitAfter:             opts.exitAfter,
 	}, nil
 }
 

@@ -71,7 +71,9 @@ The `pod` query is a regular expression so you could provide `"web-\w"` to tail
 | `--graylog-server`   |                     | Specify Graylog Server address to send logs to via GELF (format: address:port)                                           |
 | `--graylog-retries`  | `100`               | Specify Graylog Server connection retries                                                                                |
 | `--client-timeout`   | `3600`              | Specify Kubernetes watch client timeout in seconds                                                                       |
+| `--exit-after`       |                     | Specify after how much seconds the program will exit (time duration like 24h, 30m, or 2h). Will not exit if unspecified. |
 | `template`           |                     | Template to use for log lines, leave empty to use --output flag                                                          |
+
 
 See `stern --help` for details
 

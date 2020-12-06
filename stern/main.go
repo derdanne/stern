@@ -202,6 +202,15 @@ OUTER:
 			}()
 		}
 
+		if config.ExitAfter > 0 {
+			go func() {
+				time.AfterFunc(config.ExitAfter, func() {
+					println(fmt.Sprintf("Intended shutdown after %s", config.ExitAfter))
+					os.Exit(0)
+				})
+			}()
+		}
+
 		for {
 			select {
 			case <-restart:

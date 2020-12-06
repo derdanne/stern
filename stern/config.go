@@ -44,4 +44,5 @@ type Config struct {
 	GraylogServer         string
 	GraylogRetries        int
 	ClientTimeout         int64
+	ExitAfter             time.Duration
 }
