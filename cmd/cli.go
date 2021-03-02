@@ -36,7 +36,7 @@ import (
 	"github.com/fatih/color"
 )
 
-const version = "2.1.15"
+const version = "2.1.16"
 
 type Options struct {
 	container        string
@@ -300,6 +300,7 @@ func parseConfig(args []string) (*stern.Config, error) {
 		ContainerQuery:        container,
 		ExcludeContainerQuery: excludeContainer,
 		ContainerState:        containerState,
+		InitContainers:        opts.initContainers,
 		Exclude:               exclude,
 		Include:               include,
 		Timestamps:            opts.timestamps,
